@@ -1,17 +1,12 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.UI;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using SoundBeats.Web.Data;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using SoundBeats.Infrastructure.Data;
+using SoundBeats.Infrastructure.Identity;
 
 namespace SoundBeats.Web
 {
@@ -27,13 +22,29 @@ namespace SoundBeats.Web
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseSqlite(
-                    Configuration.GetConnectionString("DefaultConnection")));
-            services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
-                .AddEntityFrameworkStores<ApplicationDbContext>();
-            services.AddControllersWithViews();
-           services.AddRazorPages();
+            services.AddDbContext<SoundBeatsDbContext>(options =>
+                options.UseMySQL(
+                    Configuration.GetConnectionString("SoundBeatsConnection")));
+
+            services.AddDbContext<AppIdentityDbContext>(options =>
+                options.UseMySQL(
+                    Configuration.GetConnectionString("IdentityContextConnection")));
+
+            //services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
+            //    .AddEntityFrameworkStores<AppIdentityDbContext>();
+
+            services.AddIdentity<IdentityUser, IdentityRole>()
+                .AddEntityFrameworkStores<AppIdentityDbContext>();
+
+
+            //services.AddIdentity<SoundBeatsUser, IdentityRole>()
+            //    .AddEntityFrameworkStores<AppIdentityDbContext>()
+            //    .AddDefaultTokenProviders();
+
+
+            services.AddControllersWithViews().AddRazorRuntimeCompilation();
+            services.AddMvc();
+            services.AddRazorPages();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -63,6 +74,7 @@ namespace SoundBeats.Web
                 endpoints.MapControllerRoute(
                     name: "default",
                     pattern: "{controller=Home}/{action=Index}/{id?}");
+
                 endpoints.MapRazorPages();
             });
         }
